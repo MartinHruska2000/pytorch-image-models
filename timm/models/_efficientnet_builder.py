@@ -564,9 +564,42 @@ def _init_weight_goog(m, n='', fix_group_fanout=True):
         nn.init.uniform_(m.weight, -init_range, init_range)
         nn.init.zeros_(m.bias)
 
+##############################################      MY CODE     #####################################################################################
+
+def _init_weight_custom(m, n='', fix_group_fanout=True):
+    """ Custom weight initialization function, using Xavier for Conv2d and Linear layers. """
+    if isinstance(m, CondConv2d):
+        # Custom initialization for CondConv2d (unchanged from original)
+        fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+        if fix_group_fanout:
+            fan_out //= m.groups
+        init_weight_fn = get_condconv_initializer(
+            lambda w: nn.init.xavier_uniform_(w), m.num_experts, m.weight_shape)
+        init_weight_fn(m.weight)
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.Conv2d):
+        # Apply Xavier initialization and print weight statistics
+        nn.init.xavier_uniform_(m.weight)
+        print(f'Initialized Conv2d: {n} | Weight Mean: {m.weight.mean().item()} | Weight Std: {m.weight.std().item()}')
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+            print(f'Conv2d: {n} | Bias initialized to zeros')
+    elif isinstance(m, nn.BatchNorm2d):
+        # Keep the original logic for BatchNorm2d
+        nn.init.ones_(m.weight)
+        nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.Linear):
+        # Apply Xavier initialization and print weight statistics
+        nn.init.xavier_uniform_(m.weight)
+        print(f'Initialized Linear: {n} | Weight Mean: {m.weight.mean().item()} | Weight Std: {m.weight.std().item()}')
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+            print(f'Linear: {n} | Bias initialized to zeros')
+
 
 def efficientnet_init_weights(model: nn.Module, init_fn=None):
-    init_fn = init_fn or _init_weight_goog
+    init_fn = init_fn or _init_weight_custom
     for n, m in model.named_modules():
         init_fn(m, n)
 
@@ -574,3 +607,15 @@ def efficientnet_init_weights(model: nn.Module, init_fn=None):
     for n, m in named_modules(model):
         if hasattr(m, 'init_weights'):
             m.init_weights()
+##############################################      END MY CODE     #####################################################################################
+
+# ORIGINAL CODE
+# def efficientnet_init_weights(model: nn.Module, init_fn=None):
+#     init_fn = init_fn or _init_weight_goog
+#     for n, m in model.named_modules():
+#         init_fn(m, n)
+#
+#     # iterate and call any module.init_weights() fn, children first
+#     for n, m in named_modules(model):
+#         if hasattr(m, 'init_weights'):
+#             m.init_weights()
