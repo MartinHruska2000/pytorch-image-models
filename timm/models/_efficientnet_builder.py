@@ -581,10 +581,8 @@ def _init_weight_custom(m, n='', fix_group_fanout=True):
     elif isinstance(m, nn.Conv2d):
         # Apply Xavier initialization and print weight statistics
         nn.init.xavier_uniform_(m.weight)
-        print(f'Initialized Conv2d: {n} | Weight Mean: {m.weight.mean().item()} | Weight Std: {m.weight.std().item()}')
         if m.bias is not None:
             nn.init.zeros_(m.bias)
-            print(f'Conv2d: {n} | Bias initialized to zeros')
     elif isinstance(m, nn.BatchNorm2d):
         # Keep the original logic for BatchNorm2d
         nn.init.ones_(m.weight)
@@ -592,21 +590,39 @@ def _init_weight_custom(m, n='', fix_group_fanout=True):
     elif isinstance(m, nn.Linear):
         # Apply Xavier initialization and print weight statistics
         nn.init.xavier_uniform_(m.weight)
-        print(f'Initialized Linear: {n} | Weight Mean: {m.weight.mean().item()} | Weight Std: {m.weight.std().item()}')
         if m.bias is not None:
             nn.init.zeros_(m.bias)
-            print(f'Linear: {n} | Bias initialized to zeros')
 
 
-def efficientnet_init_weights(model: nn.Module, init_fn=None):
-    init_fn = init_fn or _init_weight_custom
+def efficientnet_init_weights(model: nn.Module, init_fn=None, **kwargs):
+    # Get the initialization type from model kwargs
+    init_type = kwargs.get('initialization', 'goog')  # Default is 'goog' if not specified
+
+    # Decide which initialization function to use
+    if init_type == 'custom':
+        init_fn = _init_weight_custom
+        print('-----------------------------------------------------------------------------------------------------')
+        print('-----------------------------------------------------------------------------------------------------')
+        print('\ncustom initialization\n')
+        print('-----------------------------------------------------------------------------------------------------')
+        print('-----------------------------------------------------------------------------------------------------')
+    else:
+        init_fn = _init_weight_goog  # Use default initialization
+        print('-----------------------------------------------------------------------------------------------------')
+        print('-----------------------------------------------------------------------------------------------------')
+        print('\ndefault initialization\n')
+        print('-----------------------------------------------------------------------------------------------------')
+        print('-----------------------------------------------------------------------------------------------------')
+
+    # Apply the chosen initialization function to each module
     for n, m in model.named_modules():
         init_fn(m, n)
 
-    # iterate and call any module.init_weights() fn, children first
-    for n, m in named_modules(model):
+    # Iterate and call any module.init_weights() fn, children first
+    for n, m in model.named_modules():
         if hasattr(m, 'init_weights'):
             m.init_weights()
+
 ##############################################      END MY CODE     #####################################################################################
 
 # ORIGINAL CODE

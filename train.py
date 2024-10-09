@@ -389,6 +389,19 @@ group.add_argument('--use-multi-epochs-loader', action='store_true', default=Fal
 group.add_argument('--log-wandb', action='store_true', default=False,
                    help='log training and validation metrics to wandb')
 
+# My args
+
+group.add_argument('--project-wandb', default='', type=str, metavar='NAME',
+                   help='name of project on web of wandb')
+group.add_argument('--run-wandb', default='', type=str, metavar='NAME',   # same role as experiment for now
+                   help='name of run on web of wandb')
+# # Define the initialization argument separately as before
+# group.add_argument('--initialization', default='goog', type=str, metavar='NAME',
+#                    help='name of the weight initialization (custom or goog)')
+
+
+
+
 
 def _parse_args():
     # Do we have a config file to parse?
@@ -790,8 +803,12 @@ def main():
     saver = None
     output_dir = None
     if utils.is_primary(args):
-        if args.experiment:
-            exp_name = args.experiment
+#############################                     ORIGINAL CODE                 ####################################
+        #if args.experiment:
+            #exp_name = args.experiment
+#############################                    END ORIGINAL CODE                 ####################################
+        if args.run_wandb:
+            exp_name = args.run_wandb
         else:
             exp_name = '-'.join([
                 datetime.now().strftime("%Y%m%d-%H%M%S"),
@@ -815,7 +832,7 @@ def main():
 
     if utils.is_primary(args) and args.log_wandb:
         if has_wandb:
-            wandb.init(project=args.experiment, config=args)
+            wandb.init(project=args.project_wandb, name=args.run_wandb, config=args)      # ADD name=args.run_wandb
         else:
             _logger.warning(
                 "You've requested to log metrics to wandb but package not found. "

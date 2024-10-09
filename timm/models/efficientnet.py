@@ -90,7 +90,8 @@ class EfficientNet(nn.Module):
             round_chs_fn: Callable = round_channels,
             drop_rate: float = 0.,
             drop_path_rate: float = 0.,
-            global_pool: str = 'avg'
+            global_pool: str = 'avg',
+            **kwargs  # Add this to capture model_kwargs
     ):
         super(EfficientNet, self).__init__()
         act_layer = act_layer or nn.ReLU
@@ -136,7 +137,8 @@ class EfficientNet(nn.Module):
         self.global_pool, self.classifier = create_classifier(
             self.num_features, self.num_classes, pool_type=global_pool)
 
-        efficientnet_init_weights(self)
+        # Pass initialization to efficientnet_init_weights
+        efficientnet_init_weights(self, **kwargs)  # Add model_kwargs here
 
     def as_sequential(self):
         layers = [self.conv_stem, self.bn1]
