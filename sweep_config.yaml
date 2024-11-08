@@ -1,0 +1,54 @@
+program: train.py
+project: Comparison200
+method: grid
+parameters:
+  seed:
+    values: [1, 2, 3, 4, 5]
+  initialization:
+    values: ['goog', 'xavier', 'he', 'normal', 'uniform']
+
+command:
+  - python
+  - ${program}
+  - --data-dir
+  - .\CIFAR\cifar10
+  - --dataset
+  - torch/cifar10
+  - --model
+  - efficientnetv2_s
+  - --num-classes
+  - 10
+  - --input-size
+  - 3
+  - 32
+  - 32
+  - --batch-size
+  - 128
+  - --amp
+  - --no-ddp-bb
+  - --opt
+  - adamw
+  - --weight-decay
+  - 0.1
+  - --clip-grad
+  - 1.5
+  - --sched-on-updates
+  - --lr
+  - 0.001
+  - --min-lr
+  - 0.000001
+  - --epochs
+  - 200
+  - --warmup-epochs
+  - 10
+  - --warmup-lr
+  - 0.000001
+  - --aa
+  - v0
+  - --log-wandb
+  - --project-wandb
+  - COMPARING
+#  - --run-wandb
+#  - SWEEP_TRY
+  - --model-kwargs
+  - ${args_no_hyphens}
