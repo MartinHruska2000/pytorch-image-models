@@ -32,7 +32,7 @@ class MADGRAD(torch.optim.Optimizer):
     Adam may converge faster and generalize better. Currently GPU-only.
     Typically, the same learning rate schedule that is used for SGD or Adam may
     be used. The overall learning rate is not comparable to either method and
-    should be determined by a hyper-parameter sweep.
+    should be determined by a hyper-parameter sweeper.yaml.
 
     MADGRAD requires less weight decay than other methods, often as little as
     zero. Momentum values used for SGD or Adam's beta1 should work here also.

@@ -297,6 +297,7 @@ class EfficientNetFeatures(nn.Module):
             round_chs_fn: Callable = round_channels,
             drop_rate: float = 0.,
             drop_path_rate: float = 0.,
+            **kwargs  # Add this to capture model_kwargs
     ):
         super(EfficientNetFeatures, self).__init__()
         act_layer = act_layer or nn.ReLU
@@ -328,7 +329,8 @@ class EfficientNetFeatures(nn.Module):
         self.feature_info = FeatureInfo(builder.features, out_indices)
         self._stage_out_idx = {f['stage']: f['index'] for f in self.feature_info.get_dicts()}
 
-        efficientnet_init_weights(self)
+        # Pass initialization to efficientnet_init_weights
+        efficientnet_init_weights(self, **kwargs)  # Add model_kwargs here
 
         # Register feature extraction hooks with FeatureHooks helper
         self.feature_hooks = None

@@ -408,6 +408,7 @@ class ResNet(nn.Module):
             drop_block_rate: float = 0.,
             zero_init_last: bool = True,
             block_args: Optional[Dict[str, Any]] = None,
+            **kwargs  # Add this to capture model_kwargs
     ):
         """
         Args:
@@ -516,17 +517,44 @@ class ResNet(nn.Module):
         self.num_features = self.head_hidden_size = channels[-1] * block.expansion
         self.global_pool, self.fc = create_classifier(self.num_features, self.num_classes, pool_type=global_pool)
 
-        self.init_weights(zero_init_last=zero_init_last)
+        self.init_weights(zero_init_last=zero_init_last, **kwargs)
 
     @torch.jit.ignore
-    def init_weights(self, zero_init_last: bool = True):
-        for n, m in self.named_modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-        if zero_init_last:
-            for m in self.modules():
-                if hasattr(m, 'zero_init_last'):
-                    m.zero_init_last()
+    def init_weights(self, zero_init_last: bool = True, **kwargs):
+        init_type = kwargs.get('initialization', 'goog')  # Default is 'goog' if not specified
+
+        # Decide which initialization function to use
+        if init_type == 'xavier':
+            for n, m in self.named_modules():
+                if isinstance(m, nn.Conv2d):
+                    # Apply Xavier initialization and print weight statistics
+                    nn.init.xavier_uniform_(m.weight)
+                    if m.bias is not None:
+                        nn.init.zeros_(m.bias)
+
+        if init_type == 'he':
+            nn.init.kaiming_uniform_(m.weight, nonlinearity='relu')
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+
+        if init_type == 'normal':
+            nn.init.normal_(m.weight, mean=0.0, std=0.02)
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+
+        if init_type == 'uniform':
+            nn.init.uniform_(m.weight, a=-0.1, b=0.1)
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+        else:
+            for n, m in self.named_modules():
+                if isinstance(m, nn.Conv2d):
+                    nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            if zero_init_last:
+                for m in self.modules():
+                    if hasattr(m, 'zero_init_last'):
+                        m.zero_init_last()
+
 
     @torch.jit.ignore
     def group_matcher(self, coarse: bool = False):

@@ -566,7 +566,7 @@ def _init_weight_goog(m, n='', fix_group_fanout=True):
 
 ##############################################      MY CODE     #####################################################################################
 
-def _init_weight_custom(m, n='', fix_group_fanout=True):
+def _init_weight_xavier(m, n='', fix_group_fanout=True):
     """ Custom weight initialization function, using Xavier for Conv2d and Linear layers. """
     if isinstance(m, CondConv2d):
         # Custom initialization for CondConv2d (unchanged from original)
@@ -593,26 +593,86 @@ def _init_weight_custom(m, n='', fix_group_fanout=True):
         if m.bias is not None:
             nn.init.zeros_(m.bias)
 
+def _init_weight_he(m, n='', fix_group_fanout=True):
+    """ He weight initialization function for Conv2d and Linear layers. """
+    if isinstance(m, CondConv2d):
+        fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+        if fix_group_fanout:
+            fan_out //= m.groups
+        init_weight_fn = get_condconv_initializer(
+            lambda w: nn.init.kaiming_uniform_(w, nonlinearity='relu'), m.num_experts, m.weight_shape)
+        init_weight_fn(m.weight)
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.Conv2d):
+        nn.init.kaiming_uniform_(m.weight, nonlinearity='relu')
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.BatchNorm2d):
+        nn.init.ones_(m.weight)
+        nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.Linear):
+        nn.init.kaiming_uniform_(m.weight, nonlinearity='relu')
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+
+def _init_weight_normal(m, n='', mean=0.0, std=0.02):
+    """ Normal weight initialization function for Conv2d and Linear layers. """
+    if isinstance(m, CondConv2d):
+        fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+        init_weight_fn = get_condconv_initializer(
+            lambda w: nn.init.normal_(w, mean=mean, std=std), m.num_experts, m.weight_shape)
+        init_weight_fn(m.weight)
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.Conv2d):
+        nn.init.normal_(m.weight, mean=mean, std=std)
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.BatchNorm2d):
+        nn.init.ones_(m.weight)
+        nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.Linear):
+        nn.init.normal_(m.weight, mean=mean, std=std)
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+
+def _init_weight_uniform(m, n='', a=-0.1, b=0.1):
+    """ Uniform weight initialization function for Conv2d and Linear layers. """
+    if isinstance(m, CondConv2d):
+        fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+        init_weight_fn = get_condconv_initializer(
+            lambda w: nn.init.uniform_(w, a=a, b=b), m.num_experts, m.weight_shape)
+        init_weight_fn(m.weight)
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.Conv2d):
+        nn.init.uniform_(m.weight, a=a, b=b)
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.BatchNorm2d):
+        nn.init.ones_(m.weight)
+        nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.Linear):
+        nn.init.uniform_(m.weight, a=a, b=b)
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
 
 def efficientnet_init_weights(model: nn.Module, init_fn=None, **kwargs):
     # Get the initialization type from model kwargs
     init_type = kwargs.get('initialization', 'goog')  # Default is 'goog' if not specified
 
     # Decide which initialization function to use
-    if init_type == 'custom':
-        init_fn = _init_weight_custom
-        print('-----------------------------------------------------------------------------------------------------')
-        print('-----------------------------------------------------------------------------------------------------')
-        print('\ncustom initialization\n')
-        print('-----------------------------------------------------------------------------------------------------')
-        print('-----------------------------------------------------------------------------------------------------')
+    if init_type == 'xavier':
+        init_fn = _init_weight_xavier
+    if init_type == 'he':
+        init_fn = _init_weight_he
+    if init_type == 'normal':
+        init_fn = _init_weight_normal
+    if init_type == 'uniform':
+        init_fn = _init_weight_uniform
     else:
         init_fn = _init_weight_goog  # Use default initialization
-        print('-----------------------------------------------------------------------------------------------------')
-        print('-----------------------------------------------------------------------------------------------------')
-        print('\ndefault initialization\n')
-        print('-----------------------------------------------------------------------------------------------------')
-        print('-----------------------------------------------------------------------------------------------------')
 
     # Apply the chosen initialization function to each module
     for n, m in model.named_modules():
