@@ -546,6 +546,12 @@ class ResNet(nn.Module):
             nn.init.uniform_(m.weight, a=-0.1, b=0.1)
             if m.bias is not None:
                 nn.init.zeros_(m.bias)
+
+        if init_type == 'zero':
+            nn.init.zeros_(m.weight)
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+
         else:
             for n, m in self.named_modules():
                 if isinstance(m, nn.Conv2d):

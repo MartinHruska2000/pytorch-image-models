@@ -658,6 +658,31 @@ def _init_weight_uniform(m, n='', a=-0.1, b=0.1):
         if m.bias is not None:
             nn.init.zeros_(m.bias)
 
+def _init_weight_zero(m, n=''):
+    """ Zero weight initialization function for Conv2d, CondConv2d, BatchNorm2d, and Linear layers. """
+    if isinstance(m, CondConv2d):
+        # Set all experts' weights to zero for CondConv2d
+        init_weight_fn = get_condconv_initializer(
+            lambda w: nn.init.zeros_(w), m.num_experts, m.weight_shape
+        )
+        init_weight_fn(m.weight)
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.Conv2d):
+        # Set Conv2d weights and biases to zero
+        nn.init.zeros_(m.weight)
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.BatchNorm2d):
+        # Set BatchNorm2d weights to one (preserves scale) and biases to zero
+        nn.init.constant_(m.weight, 1)
+        nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.Linear):
+        # Set Linear weights and biases to zero
+        nn.init.zeros_(m.weight)
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+
 def efficientnet_init_weights(model: nn.Module, init_fn=None, **kwargs):
     # Get the initialization type from model kwargs
     init_type = kwargs.get('initialization', 'goog')  # Default is 'goog' if not specified
@@ -671,6 +696,8 @@ def efficientnet_init_weights(model: nn.Module, init_fn=None, **kwargs):
         init_fn = _init_weight_normal
     if init_type == 'uniform':
         init_fn = _init_weight_uniform
+    if init_type == 'zero':
+        init_fn = _init_weight_zero
     else:
         init_fn = _init_weight_goog  # Use default initialization
 

@@ -458,8 +458,8 @@ def main():
         if args.amp_dtype == 'bfloat16':
             amp_dtype = torch.bfloat16
 
-    args.seed = args.model_kwargs.get('seed', args.seed)         ###########            MY CODE           #########
-
+    args.seed = args.model_kwargs.get('seed', args.seed) ###########            MY CODE           #########
+    args.model_kwargs['initialization'] = args.model_kwargs.get('initialization', 'goog')
     utils.random_seed(args.seed, args.rank)
 
     if args.fuser:
@@ -991,7 +991,7 @@ def train_one_epoch(
             mixup_fn.mixup_enabled = False
     # Metrics dictionary
     eval_metrics = {}
-
+##################################       MY CODE     ################################################################################
     # Hook to capture gradients
     gradient_magnitudes = {}
 
@@ -1002,20 +1002,24 @@ def train_one_epoch(
 
         return hook_fn
 
-    # Register hooks to capture gradients of the first 5 and last 5 layers
-    layers = list(model.named_modules())  # Get all layers
-    first_5_layers = layers[:5]
-    last_5_layers = layers[-5:]
+    # Filter out only the layers with weights
+    leaf_layers = [(name, layer) for name, layer in model.named_modules() if
+                   hasattr(layer, 'weight') and layer.weight.requires_grad]
+
+    # Select the first 5 and last 5 leaf layers
+    first_5_layers = leaf_layers[:5]
+    last_5_layers = leaf_layers[-5:]
 
     # Register hooks for the first 5 layers
-    for name, layer in first_5_layers:
-        if hasattr(layer, 'weight') and layer.weight.requires_grad:
-            layer.weight.register_hook(capture_gradients(f'{name}_first'))
+    for i, (name, layer) in enumerate(first_5_layers, start=1):
+        layer.weight.register_hook(capture_gradients(f'first{i}'))
 
     # Register hooks for the last 5 layers
-    for name, layer in last_5_layers:
-        if hasattr(layer, 'weight') and layer.weight.requires_grad:
-            layer.weight.register_hook(capture_gradients(f'{name}_last'))
+    for i, (name, layer) in enumerate(last_5_layers, start=1):
+        layer.weight.register_hook(capture_gradients(f'last{i}'))
+
+
+    ##################################       END MY CODE     ################################################################################
 
     # Start of training loop
     second_order = hasattr(optimizer, 'is_second_order') and optimizer.is_second_order
@@ -1148,12 +1152,12 @@ def train_one_epoch(
 
         update_sample_count = 0
         data_start_time = time.time()
-
+    ##################################       MY CODE     ################################################################################
     # Log gradient magnitudes into eval_metrics and WandB
     for name, grad_norm in gradient_magnitudes.items():
         eval_metrics[f'grad_{name}_l2'] = grad_norm
-        wandb.log({f'grad_{name}_l2': grad_norm, 'epoch': epoch})
-
+        # wandb.log({f'grad_{name}_l2': grad_norm, 'epoch': epoch})
+    ##################################      END MY CODE     ################################################################################
     if hasattr(optimizer, 'sync_lookahead'):
         optimizer.sync_lookahead()
 
