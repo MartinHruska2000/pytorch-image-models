@@ -1,0 +1,6 @@
+roboflow
+ultralytics
+torch
+torchvision
+torchaudio
+matplotlib
