@@ -658,30 +658,30 @@ def _init_weight_uniform(m, n='', a=-0.1, b=0.1):
         if m.bias is not None:
             nn.init.zeros_(m.bias)
 
-def _init_weight_zero(m, n=''):
-    """ Zero weight initialization function for Conv2d, CondConv2d, BatchNorm2d, and Linear layers. """
+def _init_weight_one(m, n=''):
+    """ Ones weight initialization function for Conv2d, CondConv2d, BatchNorm2d, and Linear layers. """
     if isinstance(m, CondConv2d):
-        # Set all experts' weights to zero for CondConv2d
+        # Set all experts' weights to one for CondConv2d
         init_weight_fn = get_condconv_initializer(
-            lambda w: nn.init.zeros_(w), m.num_experts, m.weight_shape
+            lambda w: nn.init.ones_(w), m.num_experts, m.weight_shape
         )
         init_weight_fn(m.weight)
         if m.bias is not None:
-            nn.init.zeros_(m.bias)
+            nn.init.ones_(m.bias)
     elif isinstance(m, nn.Conv2d):
-        # Set Conv2d weights and biases to zero
-        nn.init.zeros_(m.weight)
+        # Set Conv2d weights and biases to one
+        nn.init.ones_(m.weight)
         if m.bias is not None:
-            nn.init.zeros_(m.bias)
+            nn.init.ones_(m.bias)
     elif isinstance(m, nn.BatchNorm2d):
-        # Set BatchNorm2d weights to one (preserves scale) and biases to zero
+        # Set BatchNorm2d weights to one (preserves scale) and biases to one
         nn.init.constant_(m.weight, 1)
-        nn.init.zeros_(m.bias)
+        nn.init.ones_(m.bias)
     elif isinstance(m, nn.Linear):
-        # Set Linear weights and biases to zero
-        nn.init.zeros_(m.weight)
+        # Set Linear weights and biases to one
+        nn.init.ones_(m.weight)
         if m.bias is not None:
-            nn.init.zeros_(m.bias)
+            nn.init.ones_(m.bias)
 
 def efficientnet_init_weights(model: nn.Module, init_fn=None, **kwargs):
     # Get the initialization type from model kwargs
@@ -696,8 +696,8 @@ def efficientnet_init_weights(model: nn.Module, init_fn=None, **kwargs):
         init_fn = _init_weight_normal
     if init_type == 'uniform':
         init_fn = _init_weight_uniform
-    if init_type == 'zero':
-        init_fn = _init_weight_zero
+    if init_type == 'ones':
+        init_fn = _init_weight_one
     else:
         init_fn = _init_weight_goog  # Use default initialization
 

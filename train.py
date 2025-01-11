@@ -1363,6 +1363,9 @@ def validate(
                     target = target[0:target.size(0):reduce_factor]
 
                 loss = loss_fn(output, target)
+                # if loss is.nan():
+                    # print(output)        # count nan in vector, if target is zero and output is not
+                    # print(target)
             acc1, acc5 = utils.accuracy(output, target, topk=(1, 5))
 
             if args.distributed:

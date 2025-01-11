@@ -81,10 +81,10 @@ class CheckpointSaver:
                 self.checkpoint_files, key=lambda x: x[1],
                 reverse=not self.decreasing)  # sort in descending order if a lower metric is not better
 
-            checkpoints_str = "Current checkpoints:\n"
-            for c in self.checkpoint_files:
-                checkpoints_str += ' {}\n'.format(c)
-            _logger.info(checkpoints_str)
+            # checkpoints_str = "Current checkpoints:\n"
+            # for c in self.checkpoint_files:
+            #     checkpoints_str += ' {}\n'.format(c)
+            # _logger.info(checkpoints_str)
 
             if metric is not None and (self.best_metric is None or self.cmp(metric, self.best_metric)):
                 self.best_epoch = epoch
@@ -124,7 +124,13 @@ class CheckpointSaver:
         for d in to_delete:
             try:
                 _logger.debug("Cleaning checkpoint: {}".format(d))
-                os.remove(d[0])
+                # MY CODE
+                if os.path.exists(d[0]):  # Check if file exists
+                    os.remove(d[0])
+                # else:
+                #     _logger.warning(f"Checkpoint {d[0]} does not exist and cannot be deleted.")
+                # END MY CODE
+                #os.remove(d[0])
             except Exception as e:
                 _logger.error("Exception '{}' while deleting checkpoint".format(e))
         self.checkpoint_files = self.checkpoint_files[:delete_index]
