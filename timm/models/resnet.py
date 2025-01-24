@@ -533,24 +533,32 @@ class ResNet(nn.Module):
                         nn.init.zeros_(m.bias)
 
         if init_type == 'he':
-            nn.init.kaiming_uniform_(m.weight, nonlinearity='relu')
-            if m.bias is not None:
-                nn.init.zeros_(m.bias)
+            for n, m in self.named_modules():
+                if isinstance(m, nn.Conv2d):
+                    nn.init.kaiming_uniform_(m.weight, nonlinearity='relu')
+                    if m.bias is not None:
+                        nn.init.zeros_(m.bias)
 
         if init_type == 'normal':
-            nn.init.normal_(m.weight, mean=0.0, std=0.02)
-            if m.bias is not None:
-                nn.init.zeros_(m.bias)
+            for n, m in self.named_modules():
+                if isinstance(m, nn.Conv2d):
+                    nn.init.normal_(m.weight, mean=0.0, std=0.02)
+                    if m.bias is not None:
+                        nn.init.zeros_(m.bias)
 
         if init_type == 'uniform':
-            nn.init.uniform_(m.weight, a=-0.1, b=0.1)
-            if m.bias is not None:
-                nn.init.zeros_(m.bias)
+            for n, m in self.named_modules():
+                if isinstance(m, nn.Conv2d):
+                    nn.init.uniform_(m.weight, a=-0.1, b=0.1)
+                    if m.bias is not None:
+                        nn.init.zeros_(m.bias)
 
-        if init_type == 'zero':
-            nn.init.zeros_(m.weight)
-            if m.bias is not None:
-                nn.init.zeros_(m.bias)
+        if init_type == 'ones':
+            for n, m in self.named_modules():
+                if isinstance(m, nn.Conv2d):
+                    nn.init.ones_(m.weight)
+                    if m.bias is not None:
+                        nn.init.zeros_(m.bias)
 
         else:
             for n, m in self.named_modules():
