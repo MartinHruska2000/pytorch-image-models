@@ -553,10 +553,11 @@ class ResNet(nn.Module):
                     if m.bias is not None:
                         nn.init.zeros_(m.bias)
 
-        if init_type == 'ones':
+        if init_type == 'constant':
             for n, m in self.named_modules():
                 if isinstance(m, nn.Conv2d):
-                    nn.init.ones_(m.weight)
+                    # Initialize weights with a small constant value
+                    nn.init.constant_(m.weight, 0.01)
                     if m.bias is not None:
                         nn.init.zeros_(m.bias)
 
