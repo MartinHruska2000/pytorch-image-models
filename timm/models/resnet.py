@@ -557,7 +557,7 @@ class ResNet(nn.Module):
             for n, m in self.named_modules():
                 if isinstance(m, nn.Conv2d):
                     # Initialize weights with a small constant value
-                    nn.init.constant_(m.weight, 0.01)
+                    nn.init.constant_(m.weight, 0.001)
                     if m.bias is not None:
                         nn.init.zeros_(m.bias)
 
